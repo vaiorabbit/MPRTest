@@ -1,0 +1,183 @@
+# -*- ruby -*-
+require_relative 'rmath3d_plain'
+
+module MPRAlgorithm
+  include RMath3D
+
+  class OrientedBox
+
+    attr_accessor :orientation, :center, :half
+
+    def initialize
+      @orientation = RQuat.new( 0.0, 0.0, 0.0, 1.0 )
+      @center = RVec3.new
+      @half = RVec3.new( 0.5, 0.5, 0.5 )
+    end
+
+    # returns suppot point in world coorinate.
+    def get_support_point( dir_world ) # dir_world : RMath3D::RVec3
+      orientation_conj = @orientation.getConjugated
+      dir_local = orientation_conj * RQuat.new( dir_world.x, dir_world.y, dir_world.z, 0.0 ) * @orientation
+
+      support_local = RVec3.new( @half )
+      support_local.x *= -1.0 if dir_local.x < 0.0
+      support_local.y *= -1.0 if dir_local.y < 0.0
+      support_local.z *= -1.0 if dir_local.z < 0.0
+
+      support_world = (@orientation * RQuat.new(support_local.x, support_local.y, support_local.z, 0.0) * orientation_conj).xyz
+      support_world.add! @center
+      return support_world
+    end
+  end
+
+  #
+  # Intersection test with MPR Algorithm.
+  #
+  def self.intersect( shapeA, shapeB ) # shapeA, shapeB : OrientedBox
+
+    #
+    # Phase 1 : Portal discovery
+    #
+
+    # v0 is an interior point in Minkowski difference B-A, and
+    # referred throughout this algorithm. It is convenient to choose
+    # the geometric center of B-A as v0.
+    v0 = shapeB.center - shapeA.center
+    return true if v0.getLength <= RMath3D::TOLERANCE # v0 == origin -> return overlap.
+
+    # v1, v2 and v3 constitute a triangular region called +portal+.
+    # These points are sampled from Minkowski difference B-A by using
+    # support mappings ( S_{B-A}(dir) == S_B(dir) - S_A(-dir) ).
+    # The points are chosen so as to satisfy the conditions below:
+    # * These three points are non-collinear.
+    # * The origin ray intersects with the portal.
+
+    # v1 : support point in the direction of the origin ray
+    origin_ray = -v0
+    v1 = shapeB.get_support_point(origin_ray) - shapeA.get_support_point(-origin_ray)
+    return false if RVec3.dot(v1,origin_ray) <= 0.0  # Early-out : check if origin is outside the v1 support plane (see Note [1]).
+
+    # v2 : perpendicular to plane containing origin, interior point v0 and first support point v1.
+    v1_x_v0 = RVec3.cross( v1, v0 )
+    return true if v1_x_v0.getLength <= RMath3D::TOLERANCE  # Early-out : See Note [2].
+    v2 = shapeB.get_support_point(v1_x_v0) - shapeA.get_support_point(-v1_x_v0)
+    return false if RVec3.dot(v2,v1_x_v0) <= 0.0  # Early-out : check if origin is outside the v2 support plane.
+
+    # v3 : perpendicular to plane containing v0, v1 and second support point v2.
+    v3 = nil
+    loop do  # until find out if the origin ray intersects triangle (v1,v2,v3), called `candidate portal'.
+      n = RVec3.cross( v1-v0, v2-v0 )
+      v3 = shapeB.get_support_point(n) - shapeA.get_support_point(-n)
+      return false if RVec3.dot(v3,n) <= 0.0  # Early-out : check if origin is outside the v3 support plane.
+
+      if RVec3.dot( n, origin_ray ) < 0.0 # origin is outside the plane (v0,v1,v2).
+        v2,v1 = v1,v2  # reverse the search direction n.
+        redo
+      end
+
+      if RVec3.dot( RVec3.cross(v3,v2), v0 ) < 0.0 # origin is outside the plane (v0,v2,v3). See Note [3].
+        # Among the points that constitute candidate portal, v1 is the
+        # farthest point from origin. So replace it with the new one.
+        v1 = v3
+        redo
+      end
+
+      if RVec3.dot( RVec3.cross(v1,v3), v0 ) < 0.0 # origin is outside the plane (v0,v3,v1). See Note [3].
+        # Among the points that constitute candidate portal, v2 is the
+        # farthest point from origin. So replace it with the new one.
+        v2 = v3
+        redo
+      end
+
+      break
+    end
+
+    # Now v1, v2 and v3 are non-collinear and the origin ray intersects
+    # with triangle (v1,v2,v3) (== candidate portal).
+
+    #
+    # Phase 2 : Portal refinement
+    #
+
+    loop do
+      # Check if origin is inside the portal plane (v1,v2,v3) by evaluating:
+      #       RVec3.cross(n_portal,x) - RVec3.dot(n_portal,v1) < 0   [Equation of plane]
+      #   -> -RVec3.dot(n_portal,v1) < 0   [ Substituting x with O = (0, 0, 0) ]
+      #   ->  RVec3.dot(n_portal,v1) >= 0
+      # If this holds true, origin is inside the tetrahedron (v0-(v1,v2,v3))
+      # and consequently resides in Minkowski difference B-A.
+      n_portal = RVec3.cross( v2-v1, v3-v1 )
+      return true if RVec3.dot(n_portal,v1) >= 0.0
+
+      # Origin is outside the tetrahedron. Now there are two cases to consider:
+      # * origin is completely outside the Minkowski difference B-A, or
+      # * origin is in the area enclosed by the portal and the faces of B-A.
+
+      # v4 : support point in the portal's normal direction.
+      v4 = shapeB.get_support_point(n_portal) - shapeA.get_support_point(-n_portal)
+      n_portal.normalize!
+
+      # * Check if origin is outside the support plane ( RVec3.dot(v4,n_portal) = 0 ).
+      #   In this case origin is completely in the outside of B-A.
+      #
+      # * The interval distance between the portal and the support plane ( RVec3.dot(v4-v3,n_portal )
+      #   is also checked to avoid endless loop. This example returns disjoint
+      #   if they are close enough. But, depending on the situation, it is reasonable
+      #   to return overlap.
+      return false if RVec3.dot(v4,n_portal) <= 0 || RVec3.dot(v4-v3,n_portal) <= RMath3D::TOLERANCE
+
+      #
+      # Portal refinement: See Note [4].
+      #
+      if RVec3.dot( RVec3.cross(v4,v1), v0 ) < 0.0
+        # Origin is inside the plane : (v4-v0)x(v1-v0) . X - (v4-v0)x(v1-v0) . v0 = 0
+        if RVec3.dot( RVec3.cross(v4,v2), v0 ) < 0.0
+          # Origin is inside the plane : (v4-v0)x(v2-v0) . X - (v4-v0)x(v2-v0) . v0 = 0
+          # -> New portal is (v2, v3, v4). So v1 is eliminated.
+          v1 = v4
+        else
+          # Origin is outside the plane : (v4-v0)x(v2-v0) . X - (v4-v0)x(v2-v0) . v0 = 0
+          # -> New portal is (v1, v2, v4). So v3 is eliminated.
+          v3 = v4
+        end
+      else
+        # Origin is outside the plane : (v4-v0)x(v1-v0) . X - (v4-v0)x(v1-v0) . v0 = 0
+        if RVec3.dot( RVec3.cross(v4,v3), v0 ) < 0.0
+          # Origin is inside the plane : (v4-v0)x(v3-v0) . X - (v4-v0)x(v3-v0) . v0 = 0
+          # -> New portal is (v1, v3, v4). So v2 is eliminated.
+          v2 = v4
+        else
+          # Origin is outside the plane : (v4-v0)x(v3-v0) . X - (v4-v0)x(v3-v0) . v0 = 0
+          # -> New portal is (v2, v3, v4). So v1 is eliminated.
+          v1 = v4
+        end
+      end
+    end
+  end
+
+end
+
+
+=begin
+MPRTest : A demonstration program of Minkowski Portal Refinement.
+Copyright (c) 2008- vaiorabbit <http://twitter.com/vaiorabbit>
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software
+    in a product, an acknowledgment in the product documentation would be
+    appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source
+    distribution.
+=end

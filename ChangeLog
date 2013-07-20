@@ -1,0 +1,22 @@
+2013-07-20  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Update: Old contact information is updated to the current one.
+	* Math functions replaced with new 'rmath3d'.
+
+2009-12-26  LT140
+
+	* Update: Old contact information is updated to the current one.
+
+2009-06-14  LT140
+
+	* Application.rb : New shape `MPRAlgorithm::Triangle'.
+	* Shape.rb (Triangle): Added.
+	* Draw.rb (self.triangle): Added.
+	
+2008-11-24  LT140
+
+	* Shape.rb (Cylinder,Cone,Sphere): Added.
+
+2008-11-16  LT140
+
+	* Announce: First release.

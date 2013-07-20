@@ -1,0 +1,115 @@
+# -*- rd -*-
+= Note [1] : Early-out check by `v1 support plane'
+
+Equation of a plane that contains a given point P is:
+
+  RVec3.dot( N, X ) + d = 0
+
+where:
+
+  * N : plane normal,
+  * X : (x, y, z), and
+  * d : signed distance from origin; d == -RVec3.dot( N, P ).
+
+Then, where an arbitrary point Q resides (i.e. above/on/below the plane)
+can be checked by:
+
+  * RVec3.dot(N,Q) + d > 0 : Q is above the plane (outside).
+  *                    = 0 :      on the plane.
+  *                    < 0 :      below the plane (inside).
+
+Using the definitions above, the `v1 support plane' is described as:
+
+  RVec3.dot( origin_ray, X ) - RVec3.dot( origin_ray, v1 ) = 0.
+
+And to check if the origin O = (0, 0, 0) is `outside' or not, evaluate:
+
+  RVec3.dot( origin_ray, O ) - RVec3.dot( origin_ray, v1 ) > 0.
+
+This can be rewritten as:
+
+  RVec3.dot( origin_ray, v1 ) <= 0.
+
+
+
+= Note [2] : Early-out check by the length of RVec3.cross( v1, v0 )
+
+The equation
+
+  RVec3.cross(v1, v0).getLength == RVec3.cross( v1-O, v0-O ).getLength == 0
+
+means that the origin O, v0 and v1 are colinear along the origin ray (== O-v0).
+
+There are three cases that correspond to this situation:
+
+(1) <--v1---O--v0-- (the angle between v1 and v0 is Math::PI radian.)
+(2) <---O--v1--v0-- (                                    0.0 radian.)
+(3) <---O--v0--v1-- (                                    0.0 radian.)
+
+But at this step, it is guaranteed that origin O resides `inside' of
+the v1 support plane (a plane that contains v1 and its normal vector
+is origin ray. See Note [1]). So we can safely ignore the cases (2)
+and (3).
+
+It is clear that the line segment v1-v0 is always inside the Minkowski
+distance B-A. So any point on that segment is also in B-A.  From the
+case (1) we know that origin O is on the segment v1-v0. This means
+that origin is in B-A and reports overlap.
+
+
+
+= Note [3] : About inside/outside tests with origin and the plane (v0,v3,v1)
+
+Equation of a plane that contains v0, v1 and v3 is:
+
+    N . X + d = 0
+ -> {(v1-v0)x(v3-v0)} . X - {(v1-v0)x(v3-v0)} . v0 = 0
+
+where:
+
+  * `.' : denotes dot product,
+  * `x' :         cross product.
+
+Whether origin is outside the plane or not can be evaluated by
+substituting X with O = (0, 0, 0):
+
+    - {(v1-v0) x (v3-v0)} . v0 > 0
+ ->   {(v1-v0) x (v3-v0)} . v0 < 0
+
+This can be simplified by using some rules from vector algebra (scalar
+triple product, etc.):
+
+    {(v1-v0) x (v3-v0)} . v0 < 0
+ -> (v3-v0) . {v0 x (v1-v0)} < 0
+ -> (v3-v0) . ( v0 x v1 - v0 x v0 ) < 0
+ -> v3 . (v0 x v1) - v0 . (v0 x v1) < 0
+ -> (v1 x v3) . v0 - (v0 x v0) . v1 < 0
+ -> (v1 x v3) . v0 < 0
+ -> RVec3.dot( RVec3.cross(v1,v3), v0 ) < 0.0
+
+A similar inequality holds for the plane (v0, v2, v3):
+
+  RVec3.dot( RVec3.cross(v3,v2), v0 ) < 0.0
+
+
+
+= Note [4] : About `Portal refinement' stage
+
+The faces of tetrahedron (v4-(v1,v2,v3)) are candidates of new portal:
+(v1,v2,v4), (v1,v3,v4) and (v2,v3,v4).
+
+The face that intersects with the origin ray is chosen as new portal.
+Instead of doing expensive ray-triangle intersection tests, 
+the check is done by testing origin against the three planes:
+
+  * (v4, v0, v1),
+  * (v4, v0, v2) and
+  * (v4, v0, v3).
+
+Unfortunately, a figure in GPG7 that describes the process (Figure
+2.5.8, p.175) has some misprints (no `v4' is found in that figure,
+etc). The correct version of Figure 2.5.8 is available from
+XenoCollide Forums. Readers of the GPG7 article +must+ check this out:
+
+  * XenoCollide Forums . View topic - Typo in Table 2.5.1
+    * http://xenocollide.snethen.com/forum/viewtopic.php?f=3&t=11
