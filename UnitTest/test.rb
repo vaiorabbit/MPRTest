@@ -1,6 +1,3 @@
-require_relative 'rmath3d_plain'
-include RMath3D
-
 require_relative '../MPRAlgorithm'
 require_relative '../Shape'
 

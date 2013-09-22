@@ -1,3 +1,6 @@
+require 'rmath3d/rmath3d'
+include RMath3D
+
 class TC_MPRAlgorithm < MiniTest::Test
   def setup
   end

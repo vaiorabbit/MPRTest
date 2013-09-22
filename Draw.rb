@@ -8,11 +8,12 @@ module Draw
     init_cylinder()
     init_cone()
     init_sphere()
+    init_point()
     init_arrow()
   end
 
   def self.finalize
-    displaylists = [@@dl_box, @@dl_cylinder, @@dl_cone, @@dl_sphere]
+    displaylists = [@@dl_box, @@dl_cylinder, @@dl_cone, @@dl_sphere, @@dl_point, @@dl_arrow]
     displaylists.each do |dl|
       glDeleteLists( dl, 1 )
     end
@@ -61,7 +62,7 @@ module Draw
     glLineWidth( 1.0 )
     glDisable( GL_LIGHTING )
     glShadeModel( GL_FLAT )
-    glColor( [ 0.2, 0.2, 0.8, 1.0 ] )
+    glColor4fv( [ 0.2, 0.2, 0.8, 1.0 ].pack('F4') )
 
     glEnableClientState( GL_VERTEX_ARRAY )
     glVertexPointer( 3, GL_DOUBLE, 0, @@packed_pos )
@@ -85,7 +86,7 @@ module Draw
     mtx.e03 = pos.x
     mtx.e13 = pos.y
     mtx.e23 = pos.z
-    glMultMatrixf( mtx.to_a )
+    glMultMatrixf( mtx.to_a.pack('F16') )
 
     glPushMatrix()
     glScalef( 2.0*half.x, 2.0*half.y, 2.0*half.z )
@@ -158,7 +159,7 @@ module Draw
     mtx.e03 = pos.x
     mtx.e13 = pos.y
     mtx.e23 = pos.z
-    glMultMatrixf( mtx.to_a )
+    glMultMatrixf( mtx.to_a.pack('F16') )
 
     glScalef( radius, 2.0*half_height, radius )
     glCallList( @@dl_cylinder )
@@ -213,7 +214,7 @@ module Draw
     mtx.e03 = pos.x
     mtx.e13 = pos.y
     mtx.e23 = pos.z
-    glMultMatrixf( mtx.to_a )
+    glMultMatrixf( mtx.to_a.pack('F16') )
 
     glScalef( radius, height, radius )
     glCallList( @@dl_cone )
@@ -235,9 +236,27 @@ module Draw
     glPopMatrix()
   end
 
+  def self.init_point
+    @@dl_point = glGenLists(1)
+    glNewList( @@dl_point, GL_COMPILE )
+    glColor4f( 1,1,0,1 )
+    glutSolidSphere(1.0, 16, 16)
+    glEndList()
+  end
+
+  def self.point( pos )
+    radius = 0.05
+    glPushMatrix()
+    glTranslatef( pos.x, pos.y, pos.z )
+    glScalef( radius, radius, radius )
+    glCallList( @@dl_point )
+    glPopMatrix()
+  end
+
   def self.init_arrow
     @@dl_arrow = glGenLists(1)
     glNewList( @@dl_arrow, GL_COMPILE )
+    glColor4f( 0,0.8,0,1 )
     glutSolidCone( 0.1, 0.5, 8, 8 )
     glEndList()
   end
@@ -260,7 +279,7 @@ module Draw
                         0.0,      0.0,      0.0,      1.0 )
     glPushMatrix()
     glTranslatef( line_translation.x, line_translation.y, line_translation.z )
-    glMultMatrixf( mtx4x4 )
+    glMultMatrixf( mtx4x4.to_a.pack('F16') )
     glCallList( @@dl_arrow )
     glPopMatrix()
   end
@@ -271,16 +290,16 @@ module Draw
 
     glBegin( GL_TRIANGLES )
     normal = RVec3.cross(pos[2]-pos[0], pos[1]-pos[0]).normalize!()
-    glNormal3fv( normal.to_a )
-    glVertex3fv( pos[0].to_a )
-    glVertex3fv( pos[1].to_a )
-    glVertex3fv( pos[2].to_a )
+    glNormal3fv( normal.to_a.pack('F3') )
+    glVertex3fv( pos[0].to_a.pack('F3') )
+    glVertex3fv( pos[1].to_a.pack('F3') )
+    glVertex3fv( pos[2].to_a.pack('F3') )
 
     normal = RVec3.cross(pos[1]-pos[0], pos[2]-pos[0]).normalize!()
-    glNormal3fv( normal.to_a )
-    glVertex3fv( pos[0].to_a )
-    glVertex3fv( pos[2].to_a )
-    glVertex3fv( pos[1].to_a )
+    glNormal3fv( normal.to_a.pack('F3') )
+    glVertex3fv( pos[0].to_a.pack('F3') )
+    glVertex3fv( pos[2].to_a.pack('F3') )
+    glVertex3fv( pos[1].to_a.pack('F3') )
     glEnd();
   end
 

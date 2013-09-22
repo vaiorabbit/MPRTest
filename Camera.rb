@@ -1,5 +1,5 @@
 require 'opengl'
-require_relative 'rmath3d_plain'
+require 'rmath3d/rmath3d'
 include RMath3D
 
 class Camera
@@ -85,7 +85,7 @@ class Camera
     glMatrixMode( GL_MODELVIEW )
     glLoadIdentity()
 
-    glMultMatrixf( @mtxView.lookAtRH( @position, @at, @up ) )
+    glMultMatrixf( @mtxView.lookAtRH( @position, @at, @up ).to_a.pack('F16') )
   end
 
 end

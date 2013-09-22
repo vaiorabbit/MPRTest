@@ -1,5 +1,5 @@
 # -*- ruby -*-
-require_relative 'rmath3d_plain'
+require 'rmath3d/rmath3d'
 
 module MPRAlgorithm
   include RMath3D

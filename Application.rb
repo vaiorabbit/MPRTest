@@ -1,6 +1,11 @@
 require 'opengl'
+require 'glut'
+OpenGL.load_dll
+GLUT.load_dll
+include OpenGL
+include GLUT
 
-require_relative 'rmath3d_plain'
+require 'rmath3d/rmath3d'
 include RMath3D
 
 require_relative 'Draw'
@@ -16,15 +21,15 @@ class Application
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
     glPushAttrib( GL_ALL_ATTRIB_BITS )
 
-    glLightfv( GL_LIGHT0, GL_POSITION, [10,10,10,1] )
-    glLightfv( GL_LIGHT0, GL_DIFFUSE,  [1,1,1,1] )
-    glLightfv( GL_LIGHT0, GL_SPECULAR, [1,1,1,1] )
-    glLightfv( GL_LIGHT0, GL_AMBIENT,  [0.2,0.2,0.2,1] )
+    glLightfv( GL_LIGHT0, GL_POSITION, [10,10,10,1].pack('F4') )
+    glLightfv( GL_LIGHT0, GL_DIFFUSE,  [1,1,1,1].pack('F4') )
+    glLightfv( GL_LIGHT0, GL_SPECULAR, [1,1,1,1].pack('F4') )
+    glLightfv( GL_LIGHT0, GL_AMBIENT,  [0.2,0.2,0.2,1].pack('F4') )
 
-    glLightfv( GL_LIGHT1, GL_POSITION, [-10,-10,-10,1] )
-    glLightfv( GL_LIGHT1, GL_DIFFUSE,  [1,1,1,1] )
-    glLightfv( GL_LIGHT1, GL_SPECULAR, [1,1,1,1] )
-    glLightfv( GL_LIGHT1, GL_AMBIENT,  [0.2,0.2,0.2,1] )
+    glLightfv( GL_LIGHT1, GL_POSITION, [-10,-10,-10,1].pack('F4') )
+    glLightfv( GL_LIGHT1, GL_DIFFUSE,  [1,1,1,1].pack('F4') )
+    glLightfv( GL_LIGHT1, GL_SPECULAR, [1,1,1,1].pack('F4') )
+    glLightfv( GL_LIGHT1, GL_AMBIENT,  [0.2,0.2,0.2,1].pack('F4') )
 
     Draw.floor()
 
@@ -32,13 +37,13 @@ class Application
 
     glDepthMask( GL_FALSE ) if @overlap # For rendering with transparency.
 
-    glMaterialfv( GL_FRONT, GL_SPECULAR, [0,0,0,1] )
-    glMaterialfv( GL_FRONT, GL_AMBIENT, [0.2,0.2,0.2,1] )
+    glMaterialfv( GL_FRONT, GL_SPECULAR, [0,0,0,1].pack('F4') )
+    glMaterialfv( GL_FRONT, GL_AMBIENT, [0.2,0.2,0.2,1].pack('F4') )
     glMaterialf( GL_FRONT, GL_SHININESS, 0.0 )
 
     shapes = [@shape0, @shape1].sort_by { |s| s.center.transformCoord(@camera.mtxView).z }
     shapes.each do |s|
-      glMaterialfv( GL_FRONT, GL_DIFFUSE, [s.rgb, @overlap ? 0.75 : 1.0].flatten! )
+      glMaterialfv( GL_FRONT, GL_DIFFUSE, [s.rgb, @overlap ? 0.75 : 1.0].flatten!.pack('F4') )
       s.draw
     end
 
@@ -47,7 +52,7 @@ class Application
       glDepthMask( GL_TRUE )
       glDisable( GL_DEPTH_TEST )
       glDisable( GL_LIGHTING )
-      # Draw.sphere( @overlap.position, 0.1 )
+      Draw.point( @overlap.position )
       Draw.arrow( @overlap.position, @overlap.normal, @overlap.penetration, @overlap.basis )
     end
 
@@ -56,36 +61,36 @@ class Application
   end
 
 
-  def timer( value )
-    glutTimerFunc( 1000/60, method(:timer).to_proc, 0 )
+  $timer = GLUT.create_callback(:GLUTTimerFunc) do |value|
+    glutTimerFunc( 1000/60, self, 0 )
     glutPostRedisplay()
   end
 
 
   def key( key, x, y )
     case key
-    when ?\e, ?q
+    when 27, 'q'.ord
       # 'Esc' or 'q' : Quit this program.
       exit
       return
     end
 
     case key
-    when ?\s
+    when ' '.ord
       # 'Space' : Reset posture of all shapes.
       @shape0.reset
       @shape1.reset
       # @overlap = MPRAlgorithm.intersect( @shape0, @shape1 )
       @overlap = MPRAlgorithm.get_contact( @shape0, @shape1 )
       return
-    when ?z
+    when 'z'.ord
       # 'z' : Change type of shape0
       center = RVec3.new( @shape0.center )
       @shape0 = new_shape( @rgb_red )
       @shape0.center = center
       @overlap = MPRAlgorithm.get_contact( @shape0, @shape1 )
       return
-    when ?m
+    when 'm'.ord
       # 'm' : Change type of shape1
       center = RVec3.new( @shape1.center )
       @shape1 = new_shape( @rgb_blue )
@@ -99,16 +104,16 @@ class Application
 
     case key
     # Move red shape.
-    when ?a ; shape0move.x -= 0.125
-    when ?s ; shape0move.z += 0.125
-    when ?w ; shape0move.z -= 0.125
-    when ?d ; shape0move.x += 0.125
+    when 'a'.ord ; shape0move.x -= 0.125
+    when 's'.ord ; shape0move.z += 0.125
+    when 'w'.ord ; shape0move.z -= 0.125
+    when 'd'.ord ; shape0move.x += 0.125
 
     # Move blue shape.
-    when ?j ; shape1move.x -= 0.125
-    when ?k ; shape1move.z += 0.125
-    when ?i ; shape1move.z -= 0.125
-    when ?l ; shape1move.x += 0.125
+    when 'j'.ord ; shape1move.x -= 0.125
+    when 'k'.ord ; shape1move.z += 0.125
+    when 'i'.ord ; shape1move.z -= 0.125
+    when 'l'.ord ; shape1move.x += 0.125
     end
 
     # Transform the movement in view space into world space.
@@ -130,7 +135,7 @@ class Application
     glViewport( 0, 0, width, height )
     glMatrixMode( GL_PROJECTION )
     glLoadIdentity()
-    glMultMatrixf( RMtx4.new.perspectiveFovRH( 30.0*Math::PI/180.0, width.to_f/height.to_f, 0.1, 1000.0 ) )
+    glMultMatrixf( RMtx4.new.perspectiveFovRH( 30.0*Math::PI/180.0, width.to_f/height.to_f, 0.1, 1000.0 ).to_a.pack('F16') )
 
     @window_width  = width
     @window_height = height
@@ -150,7 +155,7 @@ class Application
 
 
   def new_shape( rgb )
-    s = @shape_classes[rand(@shape_classes.length)].new
+    s = @shape_classes.rotate![0].new
     s.reset
     s.rgb = rgb
     return s
@@ -161,18 +166,18 @@ class Application
     @window_width  = 640
     @window_height = 360
 
-    glutInit()
+    glutInit([1].pack('I'), [""].pack('p'))
     glutInitDisplayMode( GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE )
     glutInitWindowPosition( 0, 0 )
     glutInitWindowSize( @window_width, @window_height )
     glutCreateWindow( "MPRAlgorithm::intersect Test" )
 
-    glutDisplayFunc( method(:draw).to_proc )
-    glutReshapeFunc( method(:reshape).to_proc )
-    glutKeyboardFunc( method(:key).to_proc )
-    glutMouseFunc( method(:mouse).to_proc )
-    glutMotionFunc( method(:motion).to_proc )
-    glutTimerFunc( 0, method(:timer).to_proc, 0 )
+    glutDisplayFunc( GLUT.create_callback(:GLUTDisplayFunc, method(:draw).to_proc) )
+    glutReshapeFunc( GLUT.create_callback(:GLUTReshapeFunc, method(:reshape).to_proc) )
+    glutKeyboardFunc( GLUT.create_callback(:GLUTKeyboardFunc, method(:key).to_proc) )
+    glutMouseFunc( GLUT.create_callback(:GLUTMouseFunc, method(:mouse).to_proc) )
+    glutMotionFunc( GLUT.create_callback(:GLUTMotionFunc, method(:motion).to_proc) )
+    glutTimerFunc( 0, $timer, 0 )
 
     # Common render states
     glEnable( GL_NORMALIZE )

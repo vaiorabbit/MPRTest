@@ -1,3 +1,8 @@
+2013-09-22  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Update: Now uses opengl-bindings gem ( https://rubygems.org/gems/opengl-bindings ).
+	* Update: Removed rmath3d_plain.rb. rmath3d is now available as a gem package ( https://rubygems.org/gems/rmath3d ).
+
 2013-07-20  vaiorabbit  <http://twitter.com/vaiorabbit>
 
 	* Update: Old contact information is updated to the current one.

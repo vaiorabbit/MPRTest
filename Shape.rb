@@ -1,6 +1,6 @@
 # -*- ruby -*-
 require_relative 'Draw'
-require_relative 'rmath3d_plain'
+require 'rmath3d/rmath3d'
 
 def urand( range )
   range*rand() - range/2.0
