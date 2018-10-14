@@ -8,7 +8,9 @@ Demonstrates intersection tests with the Minkowski Portal Refinement
 *   Last Update: Jul 20, 2013
 *   Since: Nov 16, 2008
 
-<img src="https://raw.githubusercontent.com/vaiorabbit/MPRTest/master/doc/Unhit.png" width="200"> <img src="https://raw.githubusercontent.com/vaiorabbit/MPRTest/master/doc/Hit.png" width="350">
+Example:
+*   Cone-Cylinder (not colliding) <img src="https://raw.githubusercontent.com/vaiorabbit/MPRTest/master/doc/Result00.png" width="350">
+*   Cone-Cylinder (detected colliding position and penetration) <img src="https://raw.githubusercontent.com/vaiorabbit/MPRTest/master/doc/Result01.png" width="350">
 
 ## Prerequisites ##
 
