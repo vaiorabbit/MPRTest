@@ -9,11 +9,13 @@ Demonstrates intersection tests with the Minkowski Portal Refinement
 *   Since: Nov 16, 2008
 
 Example:
+
 *   Cone-Cylinder (not colliding)
 
        <img src="https://raw.githubusercontent.com/vaiorabbit/MPRTest/master/doc/Result00.png" width="350">
 
 *   Cone-Cylinder (detected colliding position and penetration)
+
        <img src="https://raw.githubusercontent.com/vaiorabbit/MPRTest/master/doc/Result01.png" width="350">
 
 
