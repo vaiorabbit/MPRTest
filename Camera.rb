@@ -1,8 +1,8 @@
 require 'opengl'
-require 'rmath3d/rmath3d'
-include RMath3D
+require 'rmath3d/rmath3d_plain'
 
 class Camera
+  include RMath3D
 
   attr_reader :mtxView
 
@@ -14,48 +14,50 @@ class Camera
     @theta = Math::PI/3.0
     @radius = 20.0
 
-    @position = RVec3.new( @radius * Math.sin(@theta) * Math.cos(@phi), @radius * Math.cos(@theta), @radius * Math.sin(@theta) * Math.sin(@phi) )
-    @at       = RVec3.new( 0, 0, 0 )
-    @up       = RVec3.new( 0, 1, 0 )
+    @position = RVec3.new(@radius * Math.sin(@theta) * Math.cos(@phi), @radius * Math.cos(@theta), @radius * Math.sin(@theta) * Math.sin(@phi))
+    @at       = RVec3.new(0, 0, 0)
+    @up       = RVec3.new(0, 1, 0)
 
-    @mtxView = RMtx4.new.lookAtRH( @position, @at, @up )
+    @mtxView = RMtx4.new.lookAtRH(@position, @at, @up)
   end
 
-  def set_mouse_state( button, state, x, y )
-    case state
-    when GLUT_DOWN
-      if button == GLUT_LEFT_BUTTON
+  def set_mouse_state(button, state, x, y)
+    if button == GLFW::MOUSE_BUTTON_LEFT
+      if state == GLFW::PRESS
         @mouse_state |= 1
-      elsif button == GLUT_MIDDLE_BUTTON
-        @mouse_state |= 2
-      else
-        @mouse_state |= 4
-      end
-      @prev_x = x
-      @prev_y = y
-
-    when GLUT_UP
-      if button == GLUT_LEFT_BUTTON
+      else # GLFW::RELEASE
         @mouse_state &= ~1
-      elsif button == GLUT_MIDDLE_BUTTON
+      end
+    end
+    if button == GLFW::MOUSE_BUTTON_RIGHT
+      if state == GLFW::PRESS
+        @mouse_state |= 2
+      else # GLFW::RELEASE
         @mouse_state &= ~2
-      else
+      end
+    end
+    if button == GLFW::MOUSE_BUTTON_MIDDLE
+      if state == GLFW::PRESS
+        @mouse_state |= 4
+      else # GLFW::RELEASE
         @mouse_state &= ~4
       end
     end
+    @prev_x = x
+    @prev_y = y
   end
 
-  def update_from_mouse_motion( x, y )
-    if ( @mouse_state != 0 )
-      dx = ( x - @prev_x ).to_f
-      dy = ( y - @prev_y ).to_f
+  def update_from_mouse_motion(x, y)
+    if @mouse_state != 0
+      dx = (x - @prev_x).to_f
+      dy = (y - @prev_y).to_f
 
       if @mouse_state == 1 # Left
         scale = 0.5
         @phi += scale * dx * Math::PI/180
         @theta -= scale * dy * Math::PI/180
-      elsif @mouse_state == 4 # Right
-        scale = 0.05
+      elsif @mouse_state == 2 # Right
+        scale = 0.5
         @radius -= scale * dy
       end
 
@@ -63,6 +65,9 @@ class Camera
       @position.x = @radius * Math.sin(@theta) * Math.cos(@phi)
       @position.z = @radius * Math.sin(@theta) * Math.sin(@phi)
       @position.y = @radius * Math.cos(@theta)
+
+      @renew_view = true
+      @renew_pvinv = true
     end
 
     @prev_x = x
@@ -80,12 +85,11 @@ class Camera
     @radius = 10.0 if @radius < 10.0
   end
 
-
   def load_camera_matrix
-    glMatrixMode( GL_MODELVIEW )
-    glLoadIdentity()
+    GL.MatrixMode(GL::MODELVIEW)
+    GL.LoadIdentity()
 
-    glMultMatrixf( @mtxView.lookAtRH( @position, @at, @up ).to_a.pack('F16') )
+    GL.MultMatrixf(@mtxView.lookAtRH(@position, @at, @up).to_a.pack('F16'))
   end
 
 end
@@ -93,7 +97,7 @@ end
 
 =begin
 MPRTest : A demonstration program of Minkowski Portal Refinement.
-Copyright (c) 2008- vaiorabbit <http://twitter.com/vaiorabbit>
+Copyright (c) 2008-2022 vaiorabbit <http://twitter.com/vaiorabbit>
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages

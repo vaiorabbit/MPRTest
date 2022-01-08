@@ -1,5 +1,5 @@
 # -*- ruby -*-
-require 'rmath3d/rmath3d'
+require 'rmath3d/rmath3d_plain'
 
 module MPRAlgorithm
   include RMath3D
@@ -7,7 +7,7 @@ module MPRAlgorithm
   #
   # Intersection test with MPR Algorithm.
   #
-  def self.intersect( shapeA, shapeB )
+  def self.intersect(shapeA, shapeB)
 
     # Phase 1 : Portal discovery
 
@@ -18,32 +18,32 @@ module MPRAlgorithm
     # v1 : support point in the direction of the origin ray
     origin_ray = -v0
     v1 = shapeB.get_support_point(origin_ray) - shapeA.get_support_point(-origin_ray)
-    return false if RVec3.dot(v1,origin_ray) <= 0.0
+    return false if RMath3D::RVec3.dot(v1,origin_ray) <= 0.0
 
     # v2 : perpendicular to plane containing origin, interior point v0 and first support point v1.
-    v1_x_v0 = RVec3.cross( v1, v0 )
+    v1_x_v0 = RMath3D::RVec3.cross(v1, v0)
     return true if v1_x_v0.getLength <= RMath3D::TOLERANCE
     v2 = shapeB.get_support_point(v1_x_v0) - shapeA.get_support_point(-v1_x_v0)
-    return false if RVec3.dot(v2,v1_x_v0) <= 0.0
+    return false if RMath3D::RVec3.dot(v2,v1_x_v0) <= 0.0
 
     # v3 : perpendicular to plane containing v0, v1 and second support point v2.
     v3 = nil
     loop do
-      n = RVec3.cross( v1-v0, v2-v0 )
+      n = RMath3D::RVec3.cross(v1-v0, v2-v0)
       v3 = shapeB.get_support_point(n) - shapeA.get_support_point(-n)
-      return false if RVec3.dot(v3,n) <= 0.0
+      return false if RMath3D::RVec3.dot(v3,n) <= 0.0
 
-      if RVec3.dot( n, origin_ray ) < 0.0 # origin is outside the plane (v0,v1,v2).
+      if RMath3D::RVec3.dot(n, origin_ray) < 0.0 # origin is outside the plane (v0,v1,v2).
         v2,v1 = v1,v2  # reverse the search direction n.
         redo
       end
 
-      if RVec3.dot( RVec3.cross(v3,v2), v0 ) < 0.0 # origin is outside the plane (v0,v2,v3). See Note [3].
+      if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v3,v2), v0) < 0.0 # origin is outside the plane (v0,v2,v3). See Note [3].
         v1 = v3
         redo
       end
 
-      if RVec3.dot( RVec3.cross(v1,v3), v0 ) < 0.0 # origin is outside the plane (v0,v3,v1). See Note [3].
+      if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v1,v3), v0) < 0.0 # origin is outside the plane (v0,v3,v1). See Note [3].
         v2 = v3
         redo
       end
@@ -55,8 +55,8 @@ module MPRAlgorithm
 
     loop do
       # Check if origin is inside the portal plane (v1,v2,v3).
-      n_portal = RVec3.cross( v2-v1, v3-v1 )
-      return true if RVec3.dot(n_portal,v1) >= 0.0
+      n_portal = RMath3D::RVec3.cross(v2-v1, v3-v1)
+      return true if RMath3D::RVec3.dot(n_portal,v1) >= 0.0
 
       # v4 : support point in the portal's normal direction.
       v4 = shapeB.get_support_point(n_portal) - shapeA.get_support_point(-n_portal)
@@ -64,17 +64,17 @@ module MPRAlgorithm
 
       # Check if origin is outside the support plane, and the interval distance between
       # the portal and the support plane is also checked to avoid endless loop.
-      return false if RVec3.dot(v4,n_portal) <= 0 || RVec3.dot(v4-v3,n_portal) <= RMath3D::TOLERANCE
+      return false if RMath3D::RVec3.dot(v4,n_portal) <= 0 || RMath3D::RVec3.dot(v4-v3,n_portal) <= RMath3D::TOLERANCE
 
       # Portal refinement: See Note [4].
-      if RVec3.dot( RVec3.cross(v4,v1), v0 ) < 0.0
-        if RVec3.dot( RVec3.cross(v4,v2), v0 ) < 0.0
+      if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v4,v1), v0) < 0.0
+        if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v4,v2), v0) < 0.0
           v1 = v4 # New portal is (v2, v3, v4). So v1 is eliminated.
         else
           v3 = v4 # New portal is (v1, v2, v4). So v3 is eliminated.
         end
       else
-        if RVec3.dot( RVec3.cross(v4,v3), v0 ) < 0.0
+        if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v4,v3), v0) < 0.0
           v2 = v4 # New portal is (v1, v3, v4). So v2 is eliminated.
         else
           v1 = v4 # New portal is (v2, v3, v4). So v1 is eliminated.
@@ -90,16 +90,16 @@ module MPRAlgorithm
     attr_accessor :basis
 
     def initialize
-      @normal = RVec3.new
-      @position = RVec3.new
+      @normal = RMath3D::RVec3.new
+      @position = RMath3D::RVec3.new
       @penetration = 0.0
-      @basis  = RMtx3.new
+      @basis  = RMath3D::RMtx3.new
     end
 
     def update_basis
       return if !@normal
-      y_axis = RVec3.new
-      z_axis = RVec3.new
+      y_axis = RMath3D::RVec3.new
+      z_axis = RMath3D::RVec3.new
       if @normal.x.abs > @normal.y.abs
         s = 1.0 / Math.sqrt(@normal.z**2 + @normal.x**2)
         y_axis.x =  @normal.z * s
@@ -124,7 +124,7 @@ module MPRAlgorithm
     end
   end
 
-  def self.get_contact( shapeA, shapeB )
+  def self.get_contact(shapeA, shapeB)
 
     # Phase 1 : Portal discovery
 
@@ -133,7 +133,7 @@ module MPRAlgorithm
     v0B = shapeB.center
     v0 = v0B - v0A
     if v0.getLength <= RMath3D::TOLERANCE
-      v0.setElements( 0.0001, 0.0, 0.0 )
+      v0.setElements(0.0001, 0.0, 0.0)
     end
 
     # v1 : support point in the direction of the origin ray
@@ -141,17 +141,17 @@ module MPRAlgorithm
     v1A = shapeA.get_support_point(-origin_ray)
     v1B = shapeB.get_support_point(origin_ray)
     v1 = v1B - v1A
-    return nil if RVec3.dot(v1,origin_ray) <= 0.0
+    return nil if RMath3D::RVec3.dot(v1,origin_ray) <= 0.0
 
     # v2 : perpendicular to plane containing origin, interior point v0 and first support point v1.
-    v1_x_v0 = RVec3.cross( v1, v0 )
+    v1_x_v0 = RMath3D::RVec3.cross(v1, v0)
     if v1_x_v0.getLength <= RMath3D::TOLERANCE
       info = ContactInfo.new
       info.normal = (v1-v0).normalize!
       info.position = 0.5 * (v1A + v1B)
 
-      penetrationA = RVec3.dot( (v1A - info.position), -info.normal ).abs
-      penetrationB = RVec3.dot( (v1B - info.position),  info.normal ).abs
+      penetrationA = RMath3D::RVec3.dot((v1A - info.position), -info.normal).abs
+      penetrationB = RMath3D::RVec3.dot((v1B - info.position),  info.normal).abs
       info.penetration = penetrationA + penetrationB
 
       return info
@@ -159,34 +159,34 @@ module MPRAlgorithm
     v2A = shapeA.get_support_point(-v1_x_v0)
     v2B = shapeB.get_support_point(v1_x_v0)
     v2 = v2B - v2A
-    return nil if RVec3.dot(v2,v1_x_v0) <= 0.0
+    return nil if RMath3D::RVec3.dot(v2,v1_x_v0) <= 0.0
 
     # v3 : perpendicular to plane containing v0, v1 and second support point v2.
     v3 = nil
     v3A = nil
     v3B = nil
     loop do
-      n = RVec3.cross( v1-v0, v2-v0 )
+      n = RMath3D::RVec3.cross(v1-v0, v2-v0)
       v3A = shapeA.get_support_point(-n)
       v3B = shapeB.get_support_point(n)
       v3 = v3B - v3A
-      return nil if RVec3.dot(v3,n) <= 0.0
+      return nil if RMath3D::RVec3.dot(v3,n) <= 0.0
 
-      if RVec3.dot( n, origin_ray ) < 0.0 # origin is outside the plane (v0,v1,v2).
+      if RMath3D::RVec3.dot(n, origin_ray) < 0.0 # origin is outside the plane (v0,v1,v2).
         v2A,v1A = v1A,v2A
         v2B,v1B = v1B,v2B
         v2,v1 = v1,v2  # reverse the search direction n.
         redo
       end
 
-      if RVec3.dot( RVec3.cross(v3,v2), v0 ) < 0.0 # origin is outside the plane (v0,v2,v3). See Note [3].
+      if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v3,v2), v0) < 0.0 # origin is outside the plane (v0,v2,v3). See Note [3].
         v1A = v3A
         v1B = v3B
         v1 = v3
         redo
       end
 
-      if RVec3.dot( RVec3.cross(v1,v3), v0 ) < 0.0 # origin is outside the plane (v0,v3,v1). See Note [3].
+      if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v1,v3), v0) < 0.0 # origin is outside the plane (v0,v3,v1). See Note [3].
         v2A = v3A
         v2B = v3B
         v2 = v3
@@ -203,23 +203,23 @@ module MPRAlgorithm
 
     loop do
       # Check if origin is inside the portal plane (v1,v2,v3).
-      n_portal = RVec3.cross( v2-v1, v3-v1 )
+      n_portal = RMath3D::RVec3.cross(v2-v1, v3-v1)
       n_portal.normalize!
-      if !hit && RVec3.dot(n_portal,v1) >= 0.0
+      if !hit && RMath3D::RVec3.dot(n_portal,v1) >= 0.0
         info = ContactInfo.new
         info.normal = n_portal
 
-        b0 = RVec3.dot( RVec3.cross(v1, v2) , v3 )
-        b1 = RVec3.dot( RVec3.cross(v3, v2) , v0 )
-        b2 = RVec3.dot( RVec3.cross(v0, v1) , v3 )
-        b3 = RVec3.dot( RVec3.cross(v2, v1) , v0 )
+        b0 = RMath3D::RVec3.dot(RMath3D::RVec3.cross(v1, v2) , v3)
+        b1 = RMath3D::RVec3.dot(RMath3D::RVec3.cross(v3, v2) , v0)
+        b2 = RMath3D::RVec3.dot(RMath3D::RVec3.cross(v0, v1) , v3)
+        b3 = RMath3D::RVec3.dot(RMath3D::RVec3.cross(v2, v1) , v0)
         sum = b0 + b1 + b2 + b3
 
-        if ( sum <= 0 )
+        if (sum <= 0)
           b0 = 0.0
-          b1 = RVec3.dot( RVec3.cross(v2,v3), n_portal)
-          b2 = RVec3.dot( RVec3.cross(v3,v1), n_portal)
-          b3 = RVec3.dot( RVec3.cross(v1,v2), n_portal)
+          b1 = RMath3D::RVec3.dot(RMath3D::RVec3.cross(v2,v3), n_portal)
+          b2 = RMath3D::RVec3.dot(RMath3D::RVec3.cross(v3,v1), n_portal)
+          b3 = RMath3D::RVec3.dot(RMath3D::RVec3.cross(v1,v2), n_portal)
           sum = b1 + b2 + b3
         end
 
@@ -231,16 +231,16 @@ module MPRAlgorithm
         pA = (b0 * v0A + b1 * v1A + b2 * v2A + b3 * v3A) * inv
         pB = (b0 * v0B + b1 * v1B + b2 * v2B + b3 * v3B) * inv
 
-        sA = shapeA.get_support_point( -n_portal )
-        sB = shapeB.get_support_point(  n_portal )
+        sA = shapeA.get_support_point(-n_portal)
+        sB = shapeB.get_support_point( n_portal)
 
-        pointA = pA + RVec3.dot((sA-pA), n_portal) * n_portal
-        pointB = pB + RVec3.dot((sB-pB), n_portal) * n_portal
+        pointA = pA + RMath3D::RVec3.dot((sA-pA), n_portal) * n_portal
+        pointB = pB + RMath3D::RVec3.dot((sB-pB), n_portal) * n_portal
 
         info.position = 0.5 * (pointA + pointB)
 
-        penetrationA = RVec3.dot( (pointA - info.position), -n_portal ).abs
-        penetrationB = RVec3.dot( (pointB - info.position),  n_portal ).abs
+        penetrationA = RMath3D::RVec3.dot((pointA - info.position), -n_portal).abs
+        penetrationB = RMath3D::RVec3.dot((pointB - info.position),  n_portal).abs
         info.penetration = penetrationA + penetrationB
 
         hit = true
@@ -253,13 +253,13 @@ module MPRAlgorithm
 
       # Check if origin is outside the support plane, and the interval distance between
       # the portal and the support plane is also checked to avoid endless loop.
-      if RVec3.dot(v4,n_portal) <= 0.0 || RVec3.dot(v4-v3,n_portal) <= 1.0e-6
+      if RMath3D::RVec3.dot(v4,n_portal) <= 0.0 || RMath3D::RVec3.dot(v4-v3,n_portal) <= 1.0e-6
         return hit ? info : nil
       end
 
       # Portal refinement: See Note [4].
-      if RVec3.dot( RVec3.cross(v4,v1), v0 ) < 0.0
-        if RVec3.dot( RVec3.cross(v4,v2), v0 ) < 0.0
+      if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v4,v1), v0) < 0.0
+        if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v4,v2), v0) < 0.0
           v1A = v4A
           v1B = v4B
           v1 = v4 # New portal is (v2, v3, v4). So v1 is eliminated.
@@ -269,7 +269,7 @@ module MPRAlgorithm
           v3 = v4 # New portal is (v1, v2, v4). So v3 is eliminated.
         end
       else
-        if RVec3.dot( RVec3.cross(v4,v3), v0 ) < 0.0
+        if RMath3D::RVec3.dot(RMath3D::RVec3.cross(v4,v3), v0) < 0.0
           v2A = v4A
           v2B = v4B
           v2 = v4 # New portal is (v1, v3, v4). So v2 is eliminated.
@@ -287,7 +287,7 @@ end
 
 =begin
 MPRTest : A demonstration program of Minkowski Portal Refinement.
-Copyright (c) 2008- vaiorabbit <http://twitter.com/vaiorabbit>
+Copyright (c) 2008-2022 vaiorabbit <http://twitter.com/vaiorabbit>
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages

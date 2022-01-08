@@ -5,7 +5,7 @@
 Demonstrates intersection tests with the Minkowski Portal Refinement
 (MPR) algorithm, introduced by Gary Snethen.
 
-*   Last Update: Jul 20, 2013
+*   Last Update: Jan 08, 2022
 *   Since: Nov 16, 2008
 
 Example:
@@ -22,18 +22,18 @@ Example:
 ## Prerequisites ##
 
 *   Ruby Interpreter <http://www.ruby-lang.org/>
-    *   Version : 2.0.0 or higher
+    *   Version : 2.4.0 or higher
     *   RubyInstaller For Windows :
         *   http://rubyinstaller.org
 
-*   GLUT
-  *   Copy GLUT DLL (glut32.dll or freeglut.dll) here.
-  *   freeglut (http://freeglut.sourceforge.net).
+*   GLFW
+  *   Copy GLFW DLL (glfw3.dll or libglfw.dylib) here.
+  *   GLFW (https://www.glfw.org).
 
 *   opengl-bindings
     *   Available via RubyGems.
 
-            $ gem install opengl-bindings
+            $ gem install opengl-bindings2
 
     *   Ref.:
         *   https://rubygems.org/gems/opengl-bindings
@@ -42,14 +42,11 @@ Example:
 *   rmath3d
     *   Available via RubyGems
 
-            $ gem install rmath3d
-
-    *   Notice: This library provides native extension. You must setup develop environment (or DevKit) before installation.
+            $ gem install rmath3d_plain
 
     *   Ref.:
         *    https://rubygems.org/gems/rmath3d
         *    https://github.com/vaiorabbit/rmath3d
-        *    http://blog.mattwynne.net/2010/10/12/installing-ruby-gems-with-native-extensions-on-windows/
 
 ## Usage ##
 
@@ -97,18 +94,18 @@ Gary Snethen 氏による Minkowski Portal Refinement (MPR) アルゴリズム�
 ## 必要なもの ##
 
 *   Ruby <http://www.ruby-lang.org/>
-    *   バージョン : 2.0.0 以降
+    *   バージョン : 2.4.0 以降
     *   RubyInstaller For Windows :
         *   http://rubyinstaller.org
 
-*   GLUT
-  *   GLUTのDLL (glut32.dll もしくは freeglut.dll) をここにコピーしてください.
-  *   freeglut (http://freeglut.sourceforge.net).
+*   GLFW
+  *   GLFWのDLL (glfw3.dll もしくは libglfw.dylib) をここにコピーしてください。
+  *   GLFW (https://www.glfw.org).
 
 *   opengl-bindings
     *   RubyGems でインスールできます。
 
-            $ gem install opengl-bindings
+            $ gem install opengl-bindings2
 
     *   参考:
         *   https://rubygems.org/gems/opengl-bindings
@@ -117,14 +114,11 @@ Gary Snethen 氏による Minkowski Portal Refinement (MPR) アルゴリズム�
 *   rmath3d
     *   RubyGems でインスールできます。
 
-            $ gem install rmath3d
-
-    *   注意: このライブラリはC言語を利用しているため、インストール時にビルドが必要です。インストールの前に開発環境の用意が必要です。
+            $ gem install rmath3d_plain
 
     *   Ref.:
         *    https://rubygems.org/gems/rmath3d
         *    https://github.com/vaiorabbit/rmath3d
-        *    http://blog.mattwynne.net/2010/10/12/installing-ruby-gems-with-native-extensions-on-windows/
 
 
 ## 使い方 ##

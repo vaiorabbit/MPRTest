@@ -1,3 +1,7 @@
+2022-01-08  vaiorabbit  <http://twitter.com/vaiorabbit>
+
+	* Update: Now uses opengl-bindings2 gem ( https://rubygems.org/gems/opengl-bindings ) and GLFW ( https://glfw.org ).
+
 2013-09-22  vaiorabbit  <http://twitter.com/vaiorabbit>
 
 	* Update: Now uses opengl-bindings gem ( https://rubygems.org/gems/opengl-bindings ).
